@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VisionTrack AI — Object Detection & Tracking</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- TensorFlow.js & COCO-SSD for Client-side Browser Inference -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2 class="brand-title">🎯 VisionTrack AI</h2>
+        <button class="mobile-close-btn" id="closeSidebarBtn" aria-label="Close Sidebar">✕</button>
+      </div>
+
+      <div class="control-group">
+        <label class="section-label">Input Source</label>
+        <div class="radio-pill-group">
+          <label class="radio-pill active" id="pillWebcam">
+            <input type="radio" name="sourceType" value="webcam" checked /> 📷 Webcam
+          </label>
+          <label class="radio-pill" id="pillVideo">
+            <input type="radio" name="sourceType" value="video" /> 🎥 Video File
+          </label>
+        </div>
+      </div>
+
+      <div class="control-group" id="videoUploadGroup" style="display: none;">
+        <label class="section-label" for="videoFileInput">Upload Video File</label>
+        <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/ogg,video/quicktime" class="file-input" />
+        <span class="file-name-label" id="fileNameLabel">No video selected</span>
+      </div>
+
+      <hr class="sidebar-divider" />
+
+      <div class="control-group">
+        <label class="section-label">Vision Model</label>
+        <div class="select-wrapper">
+          <select id="modelSelect" class="custom-select">
+            <option value="coco-ssd-lite" selected>COCO-SSD (MobileNet v2 - 80 Classes)</option>
+          </select>
+        </div>
+        <label class="section-label" style="margin-top: 0.75rem;">Tracker</label>
+        <div class="select-wrapper">
+          <select id="trackerSelect" class="custom-select">
+            <option value="iou" selected>IoU Overlap Tracker (ByteTrack equivalent)</option>
+          </select>
+        </div>
+      </div>
+
+      <hr class="sidebar-divider" />
+
+      <div class="control-group">
+        <div class="slider-header">
+          <label class="section-label" for="confSlider">Confidence</label>
+          <span class="slider-val" id="confValue">0.50</span>
+        </div>
+        <input type="range" id="confSlider" min="0.10" max="0.95" step="0.05" value="0.50" class="slider" />
+      </div>
+
+      <div class="checkbox-list">
+        <label class="checkbox-label">
+          <input type="checkbox" id="showIdsCheck" checked />
+          <span>Show IDs</span>
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="showConfCheck" checked />
+          <span>Show Confidence</span>
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="showHudCheck" checked />
+          <span>Show HUD Overlay</span>
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="logCsvCheck" />
+          <span>Log to CSV</span>
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="syncSupabaseCheck" />
+          <span>Sync to Supabase</span>
+        </label>
+      </div>
+
+      <hr class="sidebar-divider" />
+
+      <div class="action-buttons">
+        <button id="startBtn" class="btn btn-primary">▶ Start</button>
+        <button id="stopBtn" class="btn btn-secondary" disabled>⏹ Stop</button>
+      </div>
+
+      <div class="model-status" id="modelStatusIndicator">
+        <span class="status-indicator-dot"></span>
+        <span id="modelStatusText">Loading Vision Model...</span>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <div class="top-nav">
+        <button class="menu-toggle-btn" id="menuToggleBtn" aria-label="Open Menu">☰ Settings</button>
+      </div>
+
+      <header class="main-header">
+        <h1 class="main-title">🎯 VisionTrack AI — Object Detection & Tracking</h1>
+        <p class="main-subtitle">Browser-Accelerated Object Detection, IoU Tracking & Cloud Intelligence</p>
+      </header>
+
+      <!-- Error / Alert Banner -->
+      <div id="errorBanner" class="alert-box alert-error" style="display: none;"></div>
+
+      <!-- Live Statistics Cards -->
+      <section class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-title">Objects</span>
+          <span class="metric-value" id="valObjects">0</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-title">People</span>
+          <span class="metric-value" id="valPeople">0</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-title">Vehicles</span>
+          <span class="metric-value" id="valVehicles">0</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-title">Animals</span>
+          <span class="metric-value" id="valAnimals">0</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-title">FPS</span>
+          <span class="metric-value" id="valFps">0.0</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-title">Frames</span>
+          <span class="metric-value" id="valFrames">0</span>
+        </div>
+      </section>
+
+      <!-- Video Feed / Canvas Viewport -->
+      <section class="viewport-section">
+        <div class="viewport-container" id="viewportContainer">
+          <video id="inputVideo" playsinline muted style="display: none;"></video>
+          <canvas id="outputCanvas" class="output-canvas"></canvas>
+
+          <div class="empty-state" id="emptyStateOverlay">
+            <div class="empty-icon">🎯</div>
+            <h3 class="empty-title">Select a source and press ▶ Start</h3>
+            <p class="empty-desc">Choose Webcam or upload a Video file to begin real-time object detection and tracking in the browser.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Export Action Bar -->
+      <section class="export-bar" id="exportBar" style="display: none;">
+        <button id="downloadCsvBtn" class="btn btn-outline">⬇ Download Detections CSV</button>
+        <button id="downloadSnapshotBtn" class="btn btn-outline">📸 Download Frame Snapshot</button>
+      </section>
+
+      <!-- Expandable AI Scene Intelligence & Summary Panel -->
+      <section class="ai-panel">
+        <details class="ai-expander" id="aiExpander">
+          <summary class="ai-expander-header">
+            <span>🤖 AI Scene Intelligence & Summary</span>
+            <span class="expander-arrow">▾</span>
+          </summary>
+          <div class="ai-expander-body">
+            <p class="ai-caption">Generate an automated scene intelligence summary powered by Vision AI.</p>
+            <button id="generateAiReportBtn" class="btn btn-primary" style="margin-bottom: 1rem;">Generate AI Scene Report</button>
+            <div id="aiSpinner" class="spinner-container" style="display: none;">
+              <div class="spinner"></div>
+              <span>Analyzing detection metrics with Vision AI...</span>
+            </div>
+            <div id="aiReportOutput" class="ai-report-content" style="display: none;"></div>
+          </div>
+        </details>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

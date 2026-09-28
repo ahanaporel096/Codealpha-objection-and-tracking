@@ -1,0 +1,11 @@
+{
+  "name": "visiontrack-ai",
+  "version": "1.0.0",
+  "description": "VisionTrack AI — Object Detection & Tracking with YOLOv8 + Streamlit",
+  "scripts": {
+    "dev": "cd python_app && venv\\Scripts\\streamlit.exe run app.py",
+    "start": "cd python_app && venv\\Scripts\\streamlit.exe run app.py",
+    "install-deps": "cd python_app && venv\\Scripts\\pip.exe install -r requirements.txt"
+  },
+  "private": true
+}

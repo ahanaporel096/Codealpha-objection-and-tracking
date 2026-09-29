@@ -1,7 +1,7 @@
 [project]
 name = "visiontrack-ai"
 version = "1.0.0"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
     "Flask>=2.3.0"
 ]

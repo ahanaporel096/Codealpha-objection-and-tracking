@@ -64,9 +64,9 @@ Open **`http://localhost:3000`** in your browser.
 ├── index.html                 ← Vercel web frontend entrypoint
 ├── styles.css                 ← Responsive styles for desktop & mobile
 ├── app.js                     ← Browser detection engine, IoU tracker & UI logic
-├── vercel.json                ← Vercel deployment routes and serverless config
 │
 ├── api/                       ← Lightweight Vercel Serverless Functions
+│   ├── index.py               ← Minimal health check API endpoint
 │   ├── ai_summary.py          ← Groq AI scene intelligence endpoint
 │   └── sync_supabase.py       ← Supabase cloud logging endpoint
 │

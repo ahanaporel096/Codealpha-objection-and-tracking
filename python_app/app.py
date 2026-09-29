@@ -318,3 +318,20 @@ if ss.running and ss.vp:
         ss.error_msg = f"❌ Error: {e}"
         stop()
         st.error(ss.error_msg)
+
+
+# ── Vercel Function compatibility export ─────────────────────────────────────
+# If inspected by Vercel serverless runtime:
+try:
+    from http.server import BaseHTTPRequestHandler
+
+    class handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"VisionTrack Streamlit desktop app is configured for local running.")
+    app = handler
+except Exception:
+    app = None
+

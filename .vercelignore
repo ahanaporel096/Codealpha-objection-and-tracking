@@ -1,0 +1,6 @@
+# Vercel Deployment Ignore List
+python_app/
+venv/
+.venv/
+.streamlit/
+*.pt

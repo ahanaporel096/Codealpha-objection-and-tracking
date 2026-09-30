@@ -1,8 +1,14 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "app.py": {
-      "excludeFiles": "{python_app/**,venv/**,.venv/**,node_modules/**,tests/**}"
+  "builds": [
+    {
+      "src": "python_app/app.py",
+      "use": "@vercel/python"
     }
-  }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "python_app/app.py"
+    }
+  ]
 }

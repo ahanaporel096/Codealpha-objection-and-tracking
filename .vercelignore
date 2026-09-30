@@ -1,5 +1,9 @@
 # Vercel Deployment Ignore List
-python_app/
+python_app/requirements.txt
+python_app/models/
+python_app/outputs/
+python_app/assets/
+python_app/.streamlit/
 venv/
 .venv/
 .streamlit/
